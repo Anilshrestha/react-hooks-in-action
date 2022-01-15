@@ -21,8 +21,11 @@ export default function BookablesList () {
     const {hasDetails, isLoading, error} = state;
 
     const bookablesInGroup = bookables.filter(b => b.group === group);
+    const bookable = bookablesInGroup[bookableIndex];
+    const groups = [...new Set(bookables.map(b => b.group))];
 
-    const groups = [...new Set(data.bookables.map(b => b.group))];
+    const timerRef = useRef(null);
+    const nextButtonRef = useRef();
 
     useEffect(() => {
         dispatch({type: "FETCH_BOOKABLES_REQUEST"});
@@ -32,10 +35,25 @@ export default function BookablesList () {
             .then(bookables => dispatch({
                 type: "FETCH_BOOKABLES_SUCCESS",
                 payload: bookables
-            }));
+            }))
+            .catch(error => dispatch({
+              type: "FETCH_BOOKABLES_ERROR",
+              payload: error
+            }))   
     }, []);
 
-    const bookable = bookablesInGroup[bookableIndex];
+    useEffect(() => {
+        timerRef.current = setInterval(() => {
+          dispatch({ type: "NEXT_BOOKABLE" });
+        }, 3000);
+
+        return stopPresentation;
+
+    }, []);
+
+    function stopPresentation () {
+        clearInterval(timerRef.current);
+    }
 
     function changeGroup (e) {
         dispatch({
@@ -49,6 +67,7 @@ export default function BookablesList () {
             type: "SET_BOOKABLE",
             payload: selectedIndex
         })
+        nextButtonRef.current.focus();
     }
 
     function nextBookable () {
@@ -99,6 +118,7 @@ export default function BookablesList () {
                     <button
                     className="btn"
                     onClick={nextBookable}
+                    ref={nextButtonRef}
                     autoFocus
                     >
                     <FaArrowRight />
@@ -122,6 +142,12 @@ export default function BookablesList () {
                                     />
                                     Show Details
                                 </label>
+                                <button
+                                  className="btn"
+                                  onClick={stopPresentation}
+                                >
+                                  Stop
+                                </button>
                             </span>
                         </div>
                         <p>{bookable.notes}</p>
